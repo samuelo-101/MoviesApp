@@ -7,16 +7,17 @@ import com.google.gson.Gson;
 import java.io.IOException;
 
 import moviesapp.udacity.com.moviesapp.api.model.response.ErrorResponse;
+import okhttp3.ResponseBody;
 import retrofit2.Response;
 
 public class ApiUtil {
 
     public static ErrorResponse getApiErrorFromResponse(Response response) {
         try {
-            if(response.errorBody() != null) {
-                String responseString = response.errorBody().string();
-                ErrorResponse errorResponse = new Gson().fromJson(responseString, ErrorResponse.class);
-                return errorResponse;
+            ResponseBody responseBody = response.errorBody();
+            if(responseBody != null) {
+                String responseString = responseBody.string();
+                return new Gson().fromJson(responseString, ErrorResponse.class);
             }
         } catch (IOException e) {
             e.printStackTrace();

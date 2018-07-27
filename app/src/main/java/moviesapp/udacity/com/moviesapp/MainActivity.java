@@ -2,18 +2,18 @@ package moviesapp.udacity.com.moviesapp;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
 
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import moviesapp.udacity.com.moviesapp.api.model.response.FetchMoviesResponse;
 import moviesapp.udacity.com.moviesapp.api.service.MoviesApiServiceHelper;
 import moviesapp.udacity.com.moviesapp.api.util.ApiUtil;
 import moviesapp.udacity.com.moviesapp.model.Movie;
-import okhttp3.ResponseBody;
+import moviesapp.udacity.com.moviesapp.util.SharedPrefsUtil;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
@@ -44,11 +44,12 @@ public class MainActivity extends AppCompatActivity {
     @BindView(R.id.recyclerView_movies)
     RecyclerView mRecyclerViewMovies;
 
-    private AlertDialog mAlertDialog;
+    private AlertDialog alertDialogSortOrder;
+    private AlertDialog mAlertDialogApplicationMessage;
 
     private MoviesGridRecyclerViewAdapter adapter;
 
-    private CompositeDisposable disposable = new CompositeDisposable();
+    private final CompositeDisposable disposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,29 +64,40 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MoviesGridRecyclerViewAdapter(getApplicationContext(), new ArrayList<Movie>());
         mRecyclerViewMovies.setAdapter(adapter);
 
-        showLoadingIndicator(true);
-        disposable.add(
-                getFetchPopularMoviesObservable()
-        );
+        setupUIBasedOnOrderPreference();
+    }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.action_sort_order) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.sort_by);
+            alertDialogSortOrder = builder.create();
+
+            LayoutInflater inflater = this.getLayoutInflater();
+            View dialogView = inflater.inflate(R.layout.movie_sort_order_options, null);
+            RadioButton radioButtonSortByPopular = dialogView.findViewById(R.id.radio_sort_by_popular);
+            RadioButton radioButtonSortByTopRated = dialogView.findViewById(R.id.radio_sort_by_top_rated);
+
+            boolean isSortByPopular = SharedPrefsUtil.getBoolean(getApplicationContext(), getString(R.string.shared_prefs_sort_order_key));
+            radioButtonSortByPopular.setChecked(isSortByPopular);
+            radioButtonSortByTopRated.setChecked(!isSortByPopular);
+
+            alertDialogSortOrder.setView(dialogView);
+            alertDialogSortOrder.show();
             return true;
         }
 
@@ -95,17 +107,57 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(disposable != null && !disposable.isDisposed()) {
+        if (disposable != null && !disposable.isDisposed()) {
             disposable.dispose();
         }
     }
 
     @Override
     public void onBackPressed() {
-        if(mAlertDialog != null && mAlertDialog.isShowing()) {
-            mAlertDialog.dismiss();
+        if (mAlertDialogApplicationMessage != null && mAlertDialogApplicationMessage.isShowing()) {
+            mAlertDialogApplicationMessage.dismiss();
         } else {
             super.onBackPressed();
+        }
+    }
+
+    public void onMovieSortOrderChanged(View view) {
+        boolean checked = ((RadioButton) view).isChecked();
+
+        showLoadingIndicator(true);
+
+        switch (view.getId()) {
+            case R.id.radio_sort_by_top_rated:
+                if (checked)
+                    disposable.add(
+                            getFetchTopRatedMoviesObservable()
+                    );
+                SharedPrefsUtil.putBoolean(getApplicationContext(), getString(R.string.shared_prefs_sort_order_key), !checked);
+                break;
+            case R.id.radio_sort_by_popular:
+            default:
+                disposable.add(
+                        getFetchPopularMoviesObservable()
+                );
+                SharedPrefsUtil.putBoolean(getApplicationContext(), getString(R.string.shared_prefs_sort_order_key), checked);
+                break;
+        }
+
+        alertDialogSortOrder.dismiss();
+    }
+
+    private void setupUIBasedOnOrderPreference() {
+        showLoadingIndicator(true);
+
+        boolean isSortByPopular = SharedPrefsUtil.getBoolean(getApplicationContext(), getString(R.string.shared_prefs_sort_order_key));
+        if(isSortByPopular) {
+            disposable.add(
+                    getFetchPopularMoviesObservable()
+            );
+        } else {
+            disposable.add(
+                    getFetchTopRatedMoviesObservable()
+            );
         }
     }
 
@@ -125,13 +177,42 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess(Response<FetchMoviesResponse> response) {
                         showLoadingIndicator(false);
                         handleFetchMoviesResponse(response);
+                        Snackbar.make(mRecyclerViewMovies, getString(R.string.diplaying_by_popularity), Snackbar.LENGTH_LONG).show();
                     }
 
                     @Override
                     public void onError(Throwable e) {
                         e.printStackTrace();
                         showLoadingIndicator(false);
-                        if(e instanceof ConnectException) {
+                        if (e instanceof ConnectException) {
+                            showConnectionFailedErrorMessage();
+                        } else {
+                            showGenericErrorMessage();
+                        }
+
+                    }
+                });
+    }
+
+    @NonNull
+    private DisposableSingleObserver<Response<FetchMoviesResponse>> getFetchTopRatedMoviesObservable() {
+        return MoviesApiServiceHelper.getInstance(getApplicationContext())
+                .fetchTopRatedMovies(getString(R.string.api_key))
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableSingleObserver<Response<FetchMoviesResponse>>() {
+                    @Override
+                    public void onSuccess(Response<FetchMoviesResponse> response) {
+                        showLoadingIndicator(false);
+                        handleFetchMoviesResponse(response);
+                        Snackbar.make(mRecyclerViewMovies, getString(R.string.diplaying_by_top_rated), Snackbar.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        showLoadingIndicator(false);
+                        if (e instanceof ConnectException) {
                             showConnectionFailedErrorMessage();
                         } else {
                             showGenericErrorMessage();
@@ -146,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
         switch (responseCode) {
             case 200:
                 FetchMoviesResponse fetchMoviesResponse = response.body();
-                if(fetchMoviesResponse != null) {
+                if (fetchMoviesResponse != null) {
                     adapter.setMovies(fetchMoviesResponse.getResults());
                 }
                 break;
@@ -168,51 +249,41 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(getString(R.string.api_connection_error_title));
         builder.setMessage(getString(R.string.api_connection_error_message));
-        if(mAlertDialog != null && mAlertDialog.isShowing()) {
-            mAlertDialog.dismiss();
+        if (mAlertDialogApplicationMessage != null && mAlertDialogApplicationMessage.isShowing()) {
+            mAlertDialogApplicationMessage.dismiss();
         }
-        mAlertDialog = builder.create();
-        mAlertDialog.show();
+        mAlertDialogApplicationMessage = builder.create();
+        mAlertDialogApplicationMessage.show();
     }
 
     private void showUnauthorizedErrorMessage() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getString(R.string.api_generic_error_title));
-        builder.setMessage(getString(R.string.api_unauthorized_error_message));
-        if(mAlertDialog != null && mAlertDialog.isShowing()) {
-            mAlertDialog.dismiss();
-        }
-        mAlertDialog = builder.create();
-        mAlertDialog.show();
+        showDialogMessage(getString(R.string.api_generic_error_title), getString(R.string.api_unauthorized_error_message));
     }
 
     private void showGenericErrorMessage() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getString(R.string.api_generic_error_title));
-        builder.setMessage(this.getString(R.string.api_generic_error_message));
-        if(mAlertDialog != null && mAlertDialog.isShowing()) {
-            mAlertDialog.dismiss();
-        }
-        mAlertDialog = builder.create();
-        mAlertDialog.show();
+        showDialogMessage(getString(R.string.api_generic_error_title), getString(R.string.api_generic_error_message));
     }
 
     private void showApiErrorFromErrorResponse(ErrorResponse errorResponse) {
-        if(errorResponse == null) {
+        if (errorResponse == null) {
             showGenericErrorMessage();
         } else {
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle(getString(R.string.api_generic_error_title));
-            builder.setMessage(new StringBuilder().append(errorResponse.getStatus_message())
+            String message = new StringBuilder().append(errorResponse.getStatus_message())
                     .append(" (Code: ")
                     .append(errorResponse.getStatus_code())
-                    .append(")").toString());
-            if (mAlertDialog != null && mAlertDialog.isShowing()) {
-                mAlertDialog.dismiss();
-            }
-            mAlertDialog = builder.create();
-            mAlertDialog.show();
+                    .append(")").toString();
+            showDialogMessage(getString(R.string.api_generic_error_title), message);
         }
     }
 
+    private void showDialogMessage(String title, String message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(title);
+        builder.setMessage(message);
+        if (mAlertDialogApplicationMessage != null && mAlertDialogApplicationMessage.isShowing()) {
+            mAlertDialogApplicationMessage.dismiss();
+        }
+        mAlertDialogApplicationMessage = builder.create();
+        mAlertDialogApplicationMessage.show();
+    }
 }
