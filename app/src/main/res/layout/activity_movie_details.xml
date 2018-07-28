@@ -43,6 +43,7 @@
     </android.support.design.widget.AppBarLayout>
 
     <include layout="@layout/content_movie_details" />
+    <include layout="@layout/trailers_list_layout" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_play_video"
@@ -51,6 +52,6 @@
         app:layout_anchor="@id/app_bar_layout"
         app:layout_anchorGravity="bottom|right|end"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@drawable/ic_play_arrow_white" />
+        app:srcCompat="@drawable/ic_star_white" />
 
 </android.support.design.widget.CoordinatorLayout>

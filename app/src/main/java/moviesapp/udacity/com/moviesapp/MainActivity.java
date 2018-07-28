@@ -28,8 +28,8 @@ import moviesapp.udacity.com.moviesapp.adapter.MoviesGridRecyclerViewAdapter;
 import moviesapp.udacity.com.moviesapp.api.model.response.ErrorResponse;
 import moviesapp.udacity.com.moviesapp.api.model.response.FetchMoviesResponse;
 import moviesapp.udacity.com.moviesapp.api.service.MoviesApiServiceHelper;
-import moviesapp.udacity.com.moviesapp.api.util.ApiUtil;
-import moviesapp.udacity.com.moviesapp.model.Movie;
+import moviesapp.udacity.com.moviesapp.util.ApiUtil;
+import moviesapp.udacity.com.moviesapp.api.model.Movie;
 import moviesapp.udacity.com.moviesapp.util.SharedPrefsUtil;
 import retrofit2.Response;
 

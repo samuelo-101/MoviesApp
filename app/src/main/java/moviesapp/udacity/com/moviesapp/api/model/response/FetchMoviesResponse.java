@@ -2,7 +2,7 @@ package moviesapp.udacity.com.moviesapp.api.model.response;
 
 import java.util.List;
 
-import moviesapp.udacity.com.moviesapp.model.Movie;
+import moviesapp.udacity.com.moviesapp.api.model.Movie;
 
 public class FetchMoviesResponse {
 

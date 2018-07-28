@@ -1,4 +1,4 @@
-package moviesapp.udacity.com.moviesapp.api.util;
+package moviesapp.udacity.com.moviesapp.util;
 
 import android.util.Log;
 

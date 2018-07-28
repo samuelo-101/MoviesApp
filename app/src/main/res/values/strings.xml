@@ -24,6 +24,16 @@
     <string name="shared_prefs_sort_order_key">shared_prefs_sort_order_key</string>
     <string name="diplaying_by_popularity">Displaying by popularity</string>
     <string name="diplaying_by_top_rated">Displaying by top rated</string>
-    <string name="title_activity_movie_details">MovieDetailsActivity</string>
+    <string name="title_activity_movie_details">Movie Details</string>
     <string name="slash">/</string>
+    <string name="error_failed_to_parse_release_date">We could not display the release date.</string>
+    <string name="default_no_data_available_placeholder">--</string>
+    <string name="trailers">Trailers</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="play">Play</string>
+    <string name="tap_to_retry">Tap to retry</string>
+    <string name="no_trailers_for_movie">There are no trailers available for this movie.</string>
+    <string name="error_failed_to_load_trailers">We could not load trailers for this moveie. Tap to retry.</string>
 </resources>

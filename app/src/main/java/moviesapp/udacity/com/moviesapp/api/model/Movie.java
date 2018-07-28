@@ -1,8 +1,9 @@
-package moviesapp.udacity.com.moviesapp.model;
+package moviesapp.udacity.com.moviesapp.api.model;
 
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Movie implements Parcelable {
@@ -27,6 +28,8 @@ public class Movie implements Parcelable {
         adult = in.readByte() != 0;
         overview = in.readString();
         release_date = in.readString();
+        genre_ids = new ArrayList<>();
+        in.readList(genre_ids, null);
         id = in.readInt();
         original_title = in.readString();
         original_language = in.readString();

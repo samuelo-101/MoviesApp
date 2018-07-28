@@ -17,7 +17,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import moviesapp.udacity.com.moviesapp.MovieDetailsActivity;
 import moviesapp.udacity.com.moviesapp.R;
-import moviesapp.udacity.com.moviesapp.model.Movie;
+import moviesapp.udacity.com.moviesapp.api.model.Movie;
 
 public class MoviesGridRecyclerViewAdapter extends RecyclerView.Adapter<MoviesGridRecyclerViewAdapter.ViewHolder> {
 
