@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 import android.widget.RadioButton;
 
 import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import butterknife.BindView;
@@ -179,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onError(Throwable e) {
                         e.printStackTrace();
                         showLoadingIndicator(false);
-                        if (e instanceof ConnectException) {
+                        if (e instanceof ConnectException || e instanceof UnknownHostException) {
                             showConnectionFailedErrorMessage();
                         } else {
                             showGenericErrorMessage();
@@ -207,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onError(Throwable e) {
                         e.printStackTrace();
                         showLoadingIndicator(false);
-                        if (e instanceof ConnectException) {
+                        if (e instanceof ConnectException || e instanceof UnknownHostException) {
                             showConnectionFailedErrorMessage();
                         } else {
                             showGenericErrorMessage();
@@ -249,14 +250,17 @@ public class MainActivity extends AppCompatActivity {
         }
         mAlertDialogApplicationMessage = builder.create();
         mAlertDialogApplicationMessage.show();
+        adapter.setMovies(null);
     }
 
     private void showUnauthorizedErrorMessage() {
         showDialogMessage(getString(R.string.api_generic_error_title), getString(R.string.api_unauthorized_error_message));
+        adapter.setMovies(null);
     }
 
     private void showGenericErrorMessage() {
         showDialogMessage(getString(R.string.api_generic_error_title), getString(R.string.api_generic_error_message));
+        adapter.setMovies(null);
     }
 
     private void showApiErrorFromErrorResponse(ErrorResponse errorResponse) {

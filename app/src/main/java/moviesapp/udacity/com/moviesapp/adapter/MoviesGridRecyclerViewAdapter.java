@@ -11,6 +11,7 @@ import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
@@ -67,7 +68,7 @@ public class MoviesGridRecyclerViewAdapter extends RecyclerView.Adapter<MoviesGr
     }
 
     public void setMovies(List<Movie> movies) {
-        this.mMovies = movies;
+        this.mMovies = movies == null ? new ArrayList<Movie>() : movies;
         notifyDataSetChanged();
     }
 
